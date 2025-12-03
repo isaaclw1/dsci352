@@ -48,7 +48,15 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import StandardScaler
 
-LOCAL_CSV = "WA_Fn-UseC_-Telco-Customer-Churn.csv"
+from pathlib import Path
+
+# telecom_churn root directory (one level above scripts/)
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+DATA_DIR = PROJECT_DIR / "data"
+OUTPUTS_DIR = PROJECT_DIR / "outputs"
+
+# Input CSV path
+LOCAL_CSV = DATA_DIR / "WA_Fn-UseC_-Telco-Customer-Churn.csv"
 
 # AWS Config (for Bonus)
 S3_BUCKET = os.environ.get("MODEL_BUCKET", "769341382710-model")
@@ -481,10 +489,13 @@ def main():
         verbose=1,
     )
 
+    # make sure outputs directory exists
+    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+
     # Save gradient history locally for inspection
-    with open("keras_gradients.json", "w") as f:
+    with open(OUTPUTS_DIR / "keras_gradients.json", "w") as f:
         json.dump(grad_tracker.history, f, indent=2)
-    print("Saved gradient stats to keras_gradients.json")
+    print(f"Saved gradient stats to {OUTPUTS_DIR / 'keras_gradients.json'}")
 
     # Step 4: Evaluate Keras on validation set
     y_val_pred = keras_model.predict(X_val_np).ravel()
@@ -519,7 +530,7 @@ def main():
       final_auc        = ...
     """
 
-    if keras_auc >= best_sklearn_auc - 0.01:  # Within 0.01 of best
+    if keras_auc >= best_sklearn_auc - 0.01:
         final_model_name = "keras_mlp"
         final_auc = keras_auc
     else:
@@ -555,10 +566,9 @@ def main():
     # At this point you can:
     #   - Save model_leaderboard to disk as JSON or CSV for inspection.
     #   - Create plots (e.g., bar charts of AUC/accuracy) in a separate script/notebook.
-    with open("model_leaderboard_telco.json", "w") as f:
+    with open(OUTPUTS_DIR / "model_leaderboard_telco.json", "w") as f:
         json.dump(model_leaderboard, f, indent=2)
-    print("Saved model_leaderboard_telco.json")
-
+    print(f"Saved model_leaderboard_telco.json to {OUTPUTS_DIR}")
     # Step 7 (Bonus): Build lightweight artifact for AWS Lambda
     if ENABLE_AWS_EXPORT:
         print("\nENABLE_AWS_EXPORT=True → building lightweight artifact and uploading to S3.")
