@@ -2,30 +2,34 @@
   {
     "name": "Logistic Regression",
     "type": "sklearn",
-    "auc": 0.8418610659019866
+    "auc": 0.8418610659019866,
+    "accuracy": 0.8055358410220014
   },
   {
     "name": "Random Forest",
     "type": "sklearn",
-    "auc": 0.8396794027228809
+    "auc": 0.8396794027228809,
+    "accuracy": 0.7963094393186657
   },
   {
     "name": "Gradient Boosting",
     "type": "sklearn",
-    "auc": 0.8370133560670645
+    "auc": 0.8370133560670645,
+    "accuracy": 0.7885024840312278
   },
   {
     "name": "SGD Classifier",
     "type": "sklearn",
-    "auc": 0.8296442687747035
+    "auc": 0.8296442687747035,
+    "accuracy": 0.7849538679914834
   },
   {
     "name": "keras_mlp",
     "type": "keras",
-    "auc": 0.8394016895295667,
-    "accuracy": 0.8019872249822569,
-    "grad_abs_mean": 0.000856688420753926,
-    "grad_abs_max": 0.027095047757029533,
-    "grad_std": 0.001484894659370184
+    "auc": 0.8393629388514299,
+    "accuracy": 0.7970191625266146,
+    "grad_abs_mean": 0.0008564069285057485,
+    "grad_abs_max": 0.024365272372961044,
+    "grad_std": 0.0014465689891949296
   }
 ]

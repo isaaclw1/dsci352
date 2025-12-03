@@ -345,14 +345,17 @@ def train_sklearn_models(preprocessor, X, y):
 
         # Predict probabilities
         y_val_proba = pipeline.predict_proba(X_val)[:, 1]
+        y_val_pred = pipeline.predict(X_val)
 
         # Calculate AUC
         auc_score = roc_auc_score(y_val, y_val_proba)
+        acc_score = accuracy_score(y_val, y_val_pred)
 
-        print(f"  {model_name} - Validation AUC: {auc_score:.4f}")
+        print(f"  {model_name} - Validation AUC: {auc_score:.4f}, "
+              f"Accuracy: {acc_score:.4f}")
 
         # Store results
-        results.append((model_name, pipeline, auc_score))
+        results.append((model_name, pipeline, auc_score, acc_score))
 
         # Save SGD model separately
         if "SGD" in model_name:
@@ -462,7 +465,7 @@ def main():
     (X_train, X_val, y_train, y_val) = splits
 
     # sk_results should be sorted by AUC (descending)
-    best_sklearn_name, best_sklearn_model, best_sklearn_auc = sk_results[0]
+    best_sklearn_name, best_sklearn_model, best_sklearn_auc, best_sklearn_acc = sk_results[0]
 
     # Step 3: Keras model
     print("Preparing numpy for Keras...")
@@ -511,7 +514,7 @@ def main():
     }
 
     print("\n=== MODEL SUMMARY (local) ===")
-    print(f"Best sklearn: {best_sklearn_name} AUC={best_sklearn_auc:.4f}")
+    print(f"Best sklearn: {best_sklearn_name} AUC={best_sklearn_auc:.4f} ACC={best_sklearn_acc:.4f}")
     print(f"Keras model : AUC={keras_auc:.4f} ACC={keras_acc:.4f}")
     print(f"SGD (for potential Lambda): AUC={sgd_auc:.4f}")
     print(f"Gradient quality (keras): {grad_quality}")
@@ -541,12 +544,13 @@ def main():
 
     # Step 6: Build leaderboard (for analysis/report)
     model_leaderboard = []
-    for name, model_obj, auc_val in sk_results:
+    for name, model_obj, auc_val, acc_val in sk_results:
         model_leaderboard.append(
             {
                 "name": name,
                 "type": "sklearn",
                 "auc": float(auc_val),
+                "accuracy": float(acc_val),
             }
         )
 
