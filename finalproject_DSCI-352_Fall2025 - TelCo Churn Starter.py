@@ -207,7 +207,36 @@ def build_keras_model(input_dim: int):
     Return:
       - a compiled Keras model ready for training.
     """
-    raise NotImplementedError("TODO: implement build_keras_model(input_dim).")
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+
+        # First hidden layer
+        layers.Dense(128, activation='relu', name='dense_1'),
+        layers.Dropout(0.3, name='dropout_1'),
+
+        # Second hidden layer
+        layers.Dense(64, activation='relu', name='dense_2'),
+        layers.Dropout(0.3, name='dropout_2'),
+
+        # Third hidden layer
+        layers.Dense(32, activation='relu', name='dense_3'),
+        layers.Dropout(0.2, name='dropout_3'),
+
+        # Output layer
+        layers.Dense(1, activation='sigmoid', name='output')
+    ])
+
+    # Compile
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+        loss='binary_crossentropy',
+        metrics=[
+            keras.metrics.AUC(name='auc'),
+            'accuracy'
+        ]
+    )
+
+    return model
 
 ############################
 # Scikit-Learn Models – TODO
@@ -247,7 +276,87 @@ def train_sklearn_models(preprocessor, X, y):
       - sgd_model: the chosen SGD-based pipeline for deployment
       - sgd_auc: AUC of that SGD model
     """
-    raise NotImplementedError("TODO: implement train_sklearn_models(preprocessor, X, y).")
+    # Split the data
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y
+    )
+
+    # Define models to train
+    models_to_train = [
+        (
+            "Logistic Regression",
+            LogisticRegression(max_iter=500, random_state=42)
+        ),
+        (
+            "Random Forest",
+            RandomForestClassifier(
+                n_estimators=100,
+                max_depth=10,
+                random_state=42,
+                n_jobs=-1
+            )
+        ),
+        (
+            "Gradient Boosting",
+            GradientBoostingClassifier(
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1,
+                random_state=42
+            )
+        ),
+        (
+            "SGD Classifier",
+            SGDClassifier(
+                loss='log_loss',
+                max_iter=1000,
+                tol=1e-3,
+                random_state=42
+            )
+        )
+    ]
+
+    # Train and evaluate each model
+    results = []
+    sgd_model = None
+    sgd_auc = 0.0
+
+    for model_name, classifier in models_to_train:
+        # Create pipeline
+        pipeline = Pipeline([
+            ('preprocessor', preprocessor),
+            ('clf', classifier)
+        ])
+
+        # Fit
+        print(f"Training {model_name}...")
+        pipeline.fit(X_train, y_train)
+
+        # Predict probabilities
+        y_val_proba = pipeline.predict_proba(X_val)[:, 1]
+
+        # Calculate AUC
+        auc_score = roc_auc_score(y_val, y_val_proba)
+
+        print(f"  {model_name} - Validation AUC: {auc_score:.4f}")
+
+        # Store results
+        results.append((model_name, pipeline, auc_score))
+
+        # Save SGD model separately
+        if "SGD" in model_name:
+            sgd_model = pipeline
+            sgd_auc = auc_score
+
+    # Sort by AUC descending
+    results.sort(key=lambda x: x[2], reverse=True)
+
+    splits = (X_train, X_val, y_train, y_val)
+
+    return results, splits, sgd_model, sgd_auc
 
 
 ################################################
@@ -410,9 +519,8 @@ def main():
       final_auc        = ...
     """
 
-    # Example placeholder (replace with your own logic):
-    if keras_auc >= best_sklearn_auc:
-        final_model_name = "keras_model"
+    if keras_auc >= best_sklearn_auc - 0.01:  # Within 0.01 of best
+        final_model_name = "keras_mlp"
         final_auc = keras_auc
     else:
         final_model_name = best_sklearn_name
