@@ -9,4 +9,4 @@ How to run Telecom Churn:
 
 
 How to run Bitcoin Forecasting:
-1. 
+1. Run jupyter notebook blocks one at a time or all at once, graphs will all be shown in the notebook.
