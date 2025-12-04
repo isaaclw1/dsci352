@@ -218,23 +218,18 @@ def build_keras_model(input_dim: int):
     model = keras.Sequential([
         layers.Input(shape=(input_dim,)),
 
-        # First hidden layer
         layers.Dense(128, activation='relu', name='dense_1'),
         layers.Dropout(0.3, name='dropout_1'),
 
-        # Second hidden layer
         layers.Dense(64, activation='relu', name='dense_2'),
         layers.Dropout(0.3, name='dropout_2'),
 
-        # Third hidden layer
         layers.Dense(32, activation='relu', name='dense_3'),
         layers.Dropout(0.2, name='dropout_3'),
 
-        # Output layer
         layers.Dense(1, activation='sigmoid', name='output')
     ])
 
-    # Compile
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=1e-3),
         loss='binary_crossentropy',
@@ -284,7 +279,6 @@ def train_sklearn_models(preprocessor, X, y):
       - sgd_model: the chosen SGD-based pipeline for deployment
       - sgd_auc: AUC of that SGD model
     """
-    # Split the data
     X_train, X_val, y_train, y_val = train_test_split(
         X, y,
         test_size=0.2,
@@ -292,7 +286,6 @@ def train_sklearn_models(preprocessor, X, y):
         stratify=y
     )
 
-    # Define models to train
     models_to_train = [
         (
             "Logistic Regression",
@@ -327,42 +320,30 @@ def train_sklearn_models(preprocessor, X, y):
         )
     ]
 
-    # Train and evaluate each model
     results = []
     sgd_model = None
     sgd_auc = 0.0
 
     for model_name, classifier in models_to_train:
-        # Create pipeline
         pipeline = Pipeline([
             ('preprocessor', preprocessor),
             ('clf', classifier)
         ])
 
-        # Fit
-        print(f"Training {model_name}...")
         pipeline.fit(X_train, y_train)
 
-        # Predict probabilities
         y_val_proba = pipeline.predict_proba(X_val)[:, 1]
         y_val_pred = pipeline.predict(X_val)
 
-        # Calculate AUC
         auc_score = roc_auc_score(y_val, y_val_proba)
         acc_score = accuracy_score(y_val, y_val_pred)
 
-        print(f"  {model_name} - Validation AUC: {auc_score:.4f}, "
-              f"Accuracy: {acc_score:.4f}")
-
-        # Store results
         results.append((model_name, pipeline, auc_score, acc_score))
 
-        # Save SGD model separately
         if "SGD" in model_name:
             sgd_model = pipeline
             sgd_auc = auc_score
 
-    # Sort by AUC descending
     results.sort(key=lambda x: x[2], reverse=True)
 
     splits = (X_train, X_val, y_train, y_val)
